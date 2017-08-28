@@ -1,0 +1,113 @@
+#############################################
+#         Declarative Programming           #
+#                    -                      #
+# README for Fillin Puzzle Solver in Prolog #
+#                    -                      #
+#             Jonathan Gilmour              #
+#                 540451                    #
+#############################################
+
+
+Implementation
+---
+The implementation of the solver uses an algorithm involving logical variables
+which are placed in every space in the puzzle grid. The solver then attempts
+to unify words with these slots until all words have been placed, in which 
+case the puzzle will have been solved.
+
+---
+
+
+Algorithm: Preparation
+---
+The process of the algorithm is as follows:
+
+- solve_puzzle/3
+This predicate takes a word list and a puzzle grid and fills the words into 
+the grid.
+
+First, the word list is optimised to minimise the amount of permutations 
+needed to solve the puzzle. The way it does this is as follows:
+
+- Sort the word list by word length, from longest to shortest
+- Take this sorted list, and create sublists in which words of identical 
+  length are grouped together.
+- Take this grouped list, and sort it again from shortest to longest
+- Remove on level of nesting from this list, to give the final word list.
+
+By doing this, the longest words with the fewest instances of length will
+be added to the puzzle first in the solving stage. This allows very large
+puzzles to be solved extremely quickly, even with search. 
+For example, the sample puzzle "puzzle5" is solved in 0.071 seconds (includ
+ing time to read in the files, optimise the word list, and write the solution 
+to file) according to time/1, and that is a 20x20 puzzle with 123 words. 
+As such, this optimisation process is well suited to puzzles both large 
+and small, whether they require search or not.
+
+After this optimisation happens, the slots of the puzzle grid are filled with
+free logical variables. This happens such that any blank ('_') space will have
+one variable placed. This variable is thus the same in both the horizontal and
+vertical directions.
+
+If the puzzle has words already placed, these are not replaced by variables, 
+and are just left alone.
+
+During this process, a list of possible word slots are created for horizontal 
+words.
+
+At this stage, we have a filled grid, and a list of horizontal words slots,
+with both the grid and slots sharing logical variables such that inserting
+a word into a slot also inserts it into the grid.
+
+The next step flips the puzzle using the transpose/2 predicate.
+
+After the puzzle is flipped, vertical word slots are appended onto the 
+existing list of slots. We now have a list of every possible word slot, and 
+the puzzle grid filled with variables.
+
+The puzzle is then flipped back into normal orientation. These choices have 
+no extra permutations so they can be commited with a cut (!).
+---
+
+Algorithm: Insertion of Words and Solution
+---
+Now that the program has a list of word slots, a word list, and a puzzle 
+grid, the process of actually inserting words can begin.
+
+For each word, the predicate bind_word/3 unifies it with the first possible 
+slot in the list of slots. This predicate is validated only if the word could 
+be successfully inserted, otherwise it fails.
+
+Upon failure, insert_words/2 backtracks to the last choicepoint, and 
+bind_words/3 tries to insert a previous word into a different slot.
+
+This process continues until all slots have been filled, and the puzzle is
+then considered solved.
+---
+
+Referenced Code
+---
+The only piece of referenced code is the quick sorting predicate, qsort/2 and 
+qsort_a/2, inspired by
+
+http://kti.mff.cuni.cz/~bartak/prolog/sorting.html
+
+My quick sort algorithm works on lists, and sorts by list length rather than
+integer values. The in-built sort/2 predicate was not suitable for my needs,
+and quick sort is notably faster than the merge sort algorithm used by sort/2.
+
+The read and write predicates are the originals included in the starter file.
+---
+
+
+
+
+
+
+
+
+
+
+
+
+
